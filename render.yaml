@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: my-backend
+    env: node
+    plan: free
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    rootDir: server
+
+  - type: static
+    name: my-frontend
+    buildCommand: cd client && npm install && npm run build
+    publishPath: client/build
