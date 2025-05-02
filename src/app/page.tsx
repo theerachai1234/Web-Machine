@@ -53,7 +53,6 @@ export default function Page() {
             setSelectedMachine(machine);
             setSelectedDate(machine.lastChecked); // กำหนดวันที่ตรวจล่าสุด
           }}
-          onUpdateMachine={handleUpdateMachine} // ส่งฟังก์ชันนี้ให้ MachineTable
         />
 
         {/* แสดง Modal เมื่อมีการเลือกเครื่อง */}

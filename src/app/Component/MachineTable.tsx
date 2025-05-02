@@ -10,13 +10,11 @@ type Machine = {
 type Props = {
   onSelectMachine: (machine: Machine) => void;
   machines: Machine[];
-  onUpdateMachine: (updatedMachine: Machine) => void;
 };
 
 export default function MachineTable({
   onSelectMachine,
   machines,
-  onUpdateMachine,
 }: Props) {
   return (
     <table className="min-w-full border border-gray-300">
