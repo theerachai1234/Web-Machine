@@ -1,13 +1,12 @@
 services:
   - type: web
-    name: my-backend
-    env: node
+    name: nextjs-app
+    runtime: node
+    repo: https://github.com/theerachai1234/Web-Machine.git
+    branch: main
     plan: free
-    buildCommand: cd server && npm install
-    startCommand: cd server && npm start
-    rootDir: server
-
-  - type: static
-    name: my-frontend
-    buildCommand: cd client && npm install && npm run build
-    publishPath: client/build
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
