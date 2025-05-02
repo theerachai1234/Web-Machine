@@ -9,7 +9,7 @@ export function getMaintenanceDate(lastChecked: string): string {
 dayjs.extend(customParseFormat);
 
 export function getMaintenanceInfo(maintenanceDate: string): string | null {
-    let madate = dayjs(maintenanceDate, 'DD/MM/YYYY');  
+  const madate = dayjs(maintenanceDate, 'DD/MM/YYYY');  
     const today = dayjs();
     const diff = madate.diff(today, 'day');
     if (diff < 0) return `⛔ เกินวันบำรุง ${Math.abs(diff)} วัน`;
@@ -18,7 +18,7 @@ export function getMaintenanceInfo(maintenanceDate: string): string | null {
 }
 
 export function getStatusFromDate(maintenanceDate: string): { label: string; className: string } {
-    let madate = dayjs(maintenanceDate, 'DD/MM/YYYY');  
+  const madate = dayjs(maintenanceDate, 'DD/MM/YYYY');  
     const today = dayjs();
     const diff = madate.diff(today, 'day');
   if (diff < 0) return { label: 'รอซ่อม', className: 'text-red-600 font-semibold' };
