@@ -19,27 +19,6 @@ export default function Page() {
     { name: 'เครื่อง C', lastChecked: '2025-04-01' },
   ]);
 
-  const handleSave = (updatedMachine: Machine, maintenanceDate: string) => {
-    if (updatedMachine) {
-      const formattedDate = dayjs(updatedMachine.lastChecked, 'DD-MM-YYYY').format('YYYY-MM-DD'); // แปลง Date เป็น 'YYYY-MM-DD'
-
-      const updatedMachines = machines.map((machine) =>
-        machine.name === updatedMachine.name
-          ? { ...machine, lastChecked: formattedDate, maintenanceDate }  // อัปเดตวันที่ตรวจล่าสุดและวันที่บำรุง
-          : machine
-      );
-      setMachines(updatedMachines);
-      setSelectedMachine(null); // ปิด Modal
-    }
-  };
-
-  const handleUpdateMachine = (updatedMachine: Machine) => {
-    const updatedMachines = machines.map((machine) =>
-      machine.name === updatedMachine.name ? updatedMachine : machine
-    );
-    setMachines(updatedMachines);  // อัปเดตเครื่องจักร
-  };
-
   return (
     <div>
       {/* แสดง TopBar ด้านบน */}
@@ -62,7 +41,7 @@ export default function Page() {
             dateValue={selectedDate}
             onDateChange={setSelectedDate} // ส่งฟังก์ชันให้เปลี่ยนวันที่
             onClose={() => setSelectedMachine(null)} // ปิด modal
-            onSave={(updatedMachine, maintenanceDate) => {
+            onSave={(updatedMachine) => {
               // อัปเดตเครื่องจักรเมื่อกด "บันทึก"
               const updatedMachines = machines.map((m) =>
                 m.name === updatedMachine.name
