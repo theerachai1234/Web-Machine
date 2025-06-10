@@ -3,6 +3,7 @@ import * as machinestatus from '../utils/machineStatus';
 import { Machine } from '../Models/machine';
 import dayjs from 'dayjs';
 import { FaTrash } from 'react-icons/fa';
+import Image from 'next/image';
 
 type Props = {
   onSelectMachine: (machine: Machine) => void;
@@ -37,12 +38,14 @@ export default function MachineTable({
             <tr key={index} className="hover:bg-gray-100 cursor-pointer">
               <td className="p-2 border">
                 <div className="flex items-center gap-2">
-                  <img
-                    src="/img/icon-machine.png"
-                    alt="icon"
-                    className="w-5 h-5 cursor-pointer"
-                    onClick={() => onSelectMachine(machine)}
-                  />
+                <Image
+                  src="/img/icon-machine.png"
+                  alt="icon"
+                  width={20}
+                  height={20}
+                  className="cursor-pointer"
+                  onClick={() => onSelectMachine(machine)}
+                />
                   {machine.name}
                 </div>
               </td>

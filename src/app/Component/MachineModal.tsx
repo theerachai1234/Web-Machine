@@ -7,14 +7,12 @@ import { Machine } from '../Models/machine';
 
 type Props = {
   machine: Machine;
-  onDateChange: (value: string) => void;
   onClose: () => void;
   onSave: (updatedMachine: Machine, maintenanceDate: string) => void;
 };
 
 export default function MachineModal({
   machine,
-  onDateChange,
   onClose,
   onSave,
 }: Props) {
@@ -28,9 +26,8 @@ export default function MachineModal({
   useEffect(() => {
     if (!localDate) {
       setLocalDate(today);
-      onDateChange(today);
     }
-  }, [localDate, onDateChange, today]);
+  }, [localDate, today]);
 
   // อัปเดต maintenanceDate เมื่อ selectedTypeCheck, machine หรือ localDate เปลี่ยน
   useEffect(() => {
@@ -67,7 +64,6 @@ export default function MachineModal({
     if (date) {
       const formatted = dayjs(date).format('DD-MM-YYYY');
       setLocalDate(formatted);
-      onDateChange(formatted);
     }
   };
 

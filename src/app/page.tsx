@@ -17,7 +17,6 @@ export default function Page() {
   const [error, setError] = useState<string | null>(null);
 
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
-  const [selectedDate, setSelectedDate] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
 
   useEffect(() => {
@@ -118,7 +117,6 @@ export default function Page() {
                   machines={machines}
                   onSelectMachine={(machine) => {
                     setSelectedMachine(machine);
-                    setSelectedDate(machine.lastChecked);
                   }}
                   onDeleteMachine={handleDeleteMachine} // ส่งฟังก์ชันลบเข้าไป
                 />
@@ -126,7 +124,6 @@ export default function Page() {
                 {selectedMachine && (
                   <MachineModal
                     machine={selectedMachine}
-                    onDateChange={setSelectedDate}
                     onClose={() => setSelectedMachine(null)}
                     onSave={(updatedMachine) => {
                       const updatedMachines = machines.map((m) =>
