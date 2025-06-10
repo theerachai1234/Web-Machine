@@ -7,7 +7,6 @@ import { Machine } from '../Models/machine';
 
 type Props = {
   machine: Machine;
-  dateValue: string;
   onDateChange: (value: string) => void;
   onClose: () => void;
   onSave: (updatedMachine: Machine, maintenanceDate: string) => void;
@@ -15,14 +14,13 @@ type Props = {
 
 export default function MachineModal({
   machine,
-  dateValue,
   onDateChange,
   onClose,
   onSave,
 }: Props) {
   const today = dayjs().format('DD-MM-YYYY');
 
-  const [selectedTypeCheck, setSelectedTypeCheck] = useState<'B' | 'W' | 'M'>(machine.typeCheck);
+  const [selectedTypeCheck, setSelectedTypeCheck] = useState<'B' | 'W' | 'M'>(machine.typeCheck as 'B' | 'W' | 'M');
   const [localDate, setLocalDate] = useState('');  // วันที่ตรวจล่าสุดที่เลือก
   const [maintenanceDate, setMaintenanceDate] = useState('');
 

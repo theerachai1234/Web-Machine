@@ -126,7 +126,6 @@ export default function Page() {
                 {selectedMachine && (
                   <MachineModal
                     machine={selectedMachine}
-                    dateValue={selectedDate}
                     onDateChange={setSelectedDate}
                     onClose={() => setSelectedMachine(null)}
                     onSave={(updatedMachine) => {
