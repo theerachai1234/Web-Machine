@@ -83,29 +83,47 @@ export default function MachineModal({
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const parsed = dayjs(localDate, 'DD-MM-YYYY', true);
     const safeDateValue = parsed.isValid() ? localDate : fallbackDate.format('DD-MM-YYYY');
 
-    const tempUpdatedMachine = {
-      ...machine,
-      lastChecked: safeDateValue,
-      typeCheck: selectedTypeCheck,
-    };
-
-    // กรณี typeCheck === 'B' ใช้ maintenanceDate ที่ user แก้เอง
-    // กรณีอื่นใช้ฟังก์ชันคำนวณ
-    const finalMaintenanceDate =
-      selectedTypeCheck === 'B' && maintenanceDate
-        ? maintenanceDate
-        : machinestatus.getMaintenanceDateFromCustomDate(tempUpdatedMachine, safeDateValue);
+    // แปลง lastChecked และ maintenanceDate เป็น YYYY-MM-DD ก่อนส่ง
+    const lastCheckedISO = dayjs(safeDateValue, 'DD-MM-YYYY').format('YYYY-MM-DD');
+    const maintenanceDateISO = selectedTypeCheck === 'B' && maintenanceDate
+      ? dayjs(maintenanceDate, 'DD-MM-YYYY').format('YYYY-MM-DD')
+      : dayjs(
+          machinestatus.getMaintenanceDateFromCustomDate(
+            { ...machine, typeCheck: selectedTypeCheck },
+            safeDateValue
+          ),
+          'DD-MM-YYYY'
+        ).format('YYYY-MM-DD');
 
     const updatedMachine = {
-      ...tempUpdatedMachine,
-      waitmanage: finalMaintenanceDate,
+      ...machine,
+      lastChecked: lastCheckedISO,
+      typeCheck: selectedTypeCheck,
+      waitmanage: maintenanceDateISO,
     };
 
-    onSave(updatedMachine, finalMaintenanceDate);
+    try {
+      const res = await fetch('/api/updateMachine', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedMachine),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        alert('อัปเดตข้อมูลไม่สำเร็จ: ' + errorData.error);
+        return;
+      }
+    } catch (error) {
+      alert('เกิดข้อผิดพลาดขณะอัปเดตข้อมูล');
+      console.error(error);
+    }
+
+    onSave(updatedMachine, maintenanceDateISO);
     onClose();
   };
 

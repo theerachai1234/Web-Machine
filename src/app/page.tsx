@@ -133,8 +133,8 @@ export default function Page() {
                         m.name === updatedMachine.name
                           ? {
                               ...m,
-                              lastChecked: dayjs(updatedMachine.lastChecked, 'DD-MM-YYYY').format('YYYY-MM-DD'),
-                              waitmanage: dayjs(updatedMachine.waitmanage, 'DD-MM-YYYY').format('YYYY-MM-DD'),
+                              lastChecked: dayjs(updatedMachine.lastChecked).format('YYYY-MM-DD'),
+                              waitmanage: dayjs(updatedMachine.waitmanage).format('YYYY-MM-DD'),
                               typeCheck: updatedMachine.typeCheck,
                             }
                           : m
