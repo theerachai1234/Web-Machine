@@ -1,4 +1,5 @@
 'use client';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -6,13 +7,21 @@ export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const router = useRouter();
+  const [error, setError] = useState('');
 
-  const handleLogin = () => {
-    if (username === 'admin' && password === '1234') {
+  const handleLogin = async () => {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+
+    if (res.ok) {
       localStorage.setItem('loggedIn', 'true');
-      router.push('/'); // redirect ไปหน้าเครื่องจักร
+      router.push('/'); // เข้าหน้าหลัก
     } else {
-      alert('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+      const data = await res.json();
+      setError(data.message || 'เข้าสู่ระบบล้มเหลว');
     }
   };
 
@@ -33,6 +42,7 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+        {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
         <button
           onClick={handleLogin}
           className="bg-[#543b30] text-white px-4 py-2 rounded w-full"

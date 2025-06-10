@@ -1,19 +1,18 @@
 import React from 'react';
 import * as machinestatus from '../utils/machineStatus';
+import { Machine } from '../Models/machine';
 import dayjs from 'dayjs';
-
-type Machine = {
-  name: string;
-  lastChecked: string;
-};
+import { FaTrash } from 'react-icons/fa'; // ติดตั้ง react-icons ด้วยนะ: npm i react-icons
 
 type Props = {
   onSelectMachine: (machine: Machine) => void;
+  onDeleteMachine: (name: string) => void; // ฟังก์ชันลบเครื่องจักร
   machines: Machine[];
 };
 
 export default function MachineTable({
   onSelectMachine,
+  onDeleteMachine,
   machines,
 }: Props) {
   return (
@@ -21,41 +20,71 @@ export default function MachineTable({
       <thead className="bg-gray-100">
         <tr>
           <th className="p-2 border">ชื่อเครื่อง</th>
+          <th className="p-2 border w-36">ประเภทการเช็ค</th>
           <th className="p-2 border">วันที่ตรวจล่าสุด</th>
           <th className="p-2 border">วันที่บำรุง</th>
           <th className="p-2 border">สถานะ</th>
+          <th className="p-2 border w-12">ลบ</th> {/* เพิ่มคอลัมน์ Delete */}
         </tr>
       </thead>
       <tbody>
-        {machines.map((machine, index) => {
-          const maintenanceDate = dayjs(machine.lastChecked).add(30, 'day').format('DD-MM-YYYY');
-          const status = machinestatus.getStatusFromDate(maintenanceDate);
-          const maintenanceInfo = machinestatus.getMaintenanceInfo(maintenanceDate);
+        {machines.length === 0 ? (
+          <tr>
+            <td colSpan={6} className="border px-4 py-6 text-center text-gray-500 italic">
+              ไม่มีข้อมูล
+            </td>
+          </tr>
+        ) : (
+          machines.map((machine, index) => {
+            const maintenanceDate = machinestatus.getMaintenanceDate(machine);
+            const status = machinestatus.getStatusFromDate(maintenanceDate);
+            const maintenanceInfo = machinestatus.getMaintenanceInfo(maintenanceDate);
+            const typecheck = machinestatus.getNameType(machine.typeCheck);
 
-          return (
-            <tr key={index}>
-              <td className="p-2 border">
-                <div className="flex items-center gap-2">
-                  <img
-                    src="/img/icon-machine.png"
-                    alt="icon"
-                    className="w-5 h-5 cursor-pointer"
-                    onClick={() => onSelectMachine(machine)}
-                  />
-                  {machine.name}
-                </div>
-              </td>
-              <td className="p-2 border">{dayjs(machine.lastChecked).format('DD-MM-YYYY')}</td>
-              <td className="p-2 border">
-                {maintenanceDate}
-                {maintenanceInfo && <div className="text-sm text-red-600">{maintenanceInfo}</div>}
-              </td>
-              <td className="p-2 border">
-                <span className={status.className}>{status.label}</span>
-              </td>
-            </tr>
-          );
-        })}
+            return (
+              <tr key={index} className="hover:bg-gray-100 cursor-pointer">
+                <td className="p-2 border">
+                  <div className="flex items-center gap-2">
+                    <img
+                      src="/img/icon-machine.png"
+                      alt="icon"
+                      className="w-5 h-5 cursor-pointer"
+                      onClick={() => onSelectMachine(machine)}
+                    />
+                    {machine.name}
+                  </div>
+                </td>
+                <td className="p-2 border w-36 text-center">
+                  <span className={status.className}>{typecheck}</span>
+                </td>
+                <td className="p-2 border">{dayjs(machine.lastChecked).format('DD-MM-YYYY')}</td>
+                <td className="p-2 border">
+                  {maintenanceDate}
+                  {maintenanceInfo && <div className="text-sm text-red-600">{maintenanceInfo}</div>}
+                </td>
+                <td className="p-2 border">
+                  <span className={status.className}>{status.label}</span>
+                </td>
+
+                {/* Delete button */}
+                <td className="p-2 border text-center">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // ป้องกันไม่ให้ trigger onSelectMachine
+                      if (window.confirm(`คุณต้องการลบเครื่องจักร "${machine.name}" ใช่หรือไม่?`)) {
+                        onDeleteMachine(machine.name);
+                      }
+                    }}
+                    className="text-red-600 hover:text-red-800"
+                    aria-label={`ลบเครื่องจักร ${machine.name}`}
+                  >
+                    <FaTrash />
+                  </button>
+                </td>
+              </tr>
+            );
+          })
+        )}
       </tbody>
     </table>
   );

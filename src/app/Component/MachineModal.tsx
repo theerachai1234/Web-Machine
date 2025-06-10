@@ -1,19 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import * as machinestatus from '../utils/machineStatus';
 import dayjs from 'dayjs';
-
-type Machine = {
-  name: string;
-  lastChecked: string;
-};
+import { Machine } from '../Models/machine';
 
 type Props = {
   machine: Machine;
   dateValue: string;
   onDateChange: (value: string) => void;
   onClose: () => void;
-  onSave: (updatedMachine: Machine, maintenanceDate: string) => void; // ส่งวันที่บำรุงไปด้วย
+  onSave: (updatedMachine: Machine, maintenanceDate: string) => void;
 };
 
 export default function MachineModal({
@@ -23,50 +20,97 @@ export default function MachineModal({
   onClose,
   onSave,
 }: Props) {
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleKey);
-    return () => document.removeEventListener('keydown', handleKey);
-  }, [onClose]);
+  const today = dayjs().format('DD-MM-YYYY');
 
-  // ตรวจสอบว่า dateValue เป็นวันที่ที่ valid หรือไม่
-  const parsedDate = dayjs(dateValue, 'DD-MM-YYYY', true);
-  const fallbackDate = dayjs();  // วันปัจจุบัน
-  const selectedDate = parsedDate.isValid() ? parsedDate.toDate() : fallbackDate.toDate();  // ใช้วันปัจจุบันหากไม่มีวันที่ valid
+  const [selectedTypeCheck, setSelectedTypeCheck] = useState(machine.typeCheck);
+  const [localDate, setLocalDate] = useState('');  // วันที่ตรวจล่าสุดที่เลือก
+  const [maintenanceDate, setMaintenanceDate] = useState('');
+
+  // ตั้งค่า localDate เป็นวันนี้แค่ครั้งแรกเมื่อ modal เปิด
+  useEffect(() => {
+    if (!localDate) {
+      setLocalDate(today);
+      onDateChange(today);
+    }
+  }, [localDate, onDateChange, today]);
+
+  // อัปเดต maintenanceDate เมื่อ selectedTypeCheck, machine หรือ localDate เปลี่ยน
+  useEffect(() => {
+    if (selectedTypeCheck === 'B' && machine.waitmanage) {
+      // เปลี่ยน parse เป็นฟอร์แมต ISO 8601 (YYYY-MM-DD) หรือให้ dayjs แปลงแบบ auto
+      const parsedWaitManage = dayjs(machine.waitmanage); // ไม่ต้องระบุ format เพราะ ISO 8601
+      if (parsedWaitManage.isValid()) {
+        setMaintenanceDate(parsedWaitManage.format('DD-MM-YYYY'));
+      } else {
+        setMaintenanceDate(machine.waitmanage);
+      }
+    } else {
+      const baseDate = localDate || today;
+      const updatedMachine = { ...machine, typeCheck: selectedTypeCheck };
+      const newMaintenanceDate = machinestatus.getMaintenanceDateFromCustomDate(
+        updatedMachine,
+        baseDate
+      );
+      setMaintenanceDate(newMaintenanceDate);
+    }
+  }, [selectedTypeCheck, machine, localDate, today]);
+
+  // parse localDate เป็น Date สำหรับ DatePicker
+  const parsedDate = dayjs(localDate, 'DD-MM-YYYY', true);
+  const fallbackDate = dayjs();
+  const selectedDate = parsedDate.isValid() ? parsedDate.toDate() : fallbackDate.toDate();
+
+  // parse maintenanceDate สำหรับ DatePicker (กรณี Between)
+  const parsedMaintenanceDate = dayjs(maintenanceDate, 'DD-MM-YYYY', true);
+  const maintenanceSelectedDate = parsedMaintenanceDate.isValid()
+    ? parsedMaintenanceDate.toDate()
+    : null;
 
   const handleDateChange = (date: Date | null) => {
     if (date) {
       const formatted = dayjs(date).format('DD-MM-YYYY');
-      onDateChange(formatted); // ส่งวันที่ที่เลือกกลับไป
+      setLocalDate(formatted);
+      onDateChange(formatted);
     }
   };
 
-  const handleSave = () => {
-    const parsed = dayjs(dateValue, 'DD-MM-YYYY', true);
-    const safeDateValue = parsed.isValid()
-      ? dateValue
-      : fallbackDate.format('DD-MM-YYYY'); // fallback เป็นวันปัจจุบัน
-
-    // คำนวณวันที่บำรุง (วันที่ตรวจล่าสุด + 30 วัน)
-    const maintenanceDate = dayjs(safeDateValue, 'DD-MM-YYYY').add(30, 'day').format('DD-MM-YYYY');
-
-    const updatedMachine = {
-      ...machine,
-      lastChecked: safeDateValue,
-    };
-
-    onSave(updatedMachine, maintenanceDate); // ส่งข้อมูลทั้งวันที่ตรวจล่าสุดและวันที่บำรุง
-    onClose(); // ปิด modal
+  const handleTypeCheckChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedTypeCheck(e.target.value);
   };
 
-  // คำนวณวันที่บำรุง (หากยังไม่มีการเลือกวันที่ ตรวจล่าสุดให้ใช้วันปัจจุบัน)
-  const maintenanceDate = dayjs().add(30, 'day').format('DD-MM-YYYY');
+const handleSave = () => {
+  const parsed = dayjs(localDate, 'DD-MM-YYYY', true);
+  const safeDateValue = parsed.isValid() ? localDate : fallbackDate.format('DD-MM-YYYY');
+
+  const tempUpdatedMachine = {
+    ...machine,
+    lastChecked: safeDateValue,
+    typeCheck: selectedTypeCheck,
+  };
+
+  const finalMaintenanceDate = machinestatus.getMaintenanceDateFromCustomDate(
+    tempUpdatedMachine,
+    safeDateValue
+  );
+
+  const updatedMachine = {
+    ...tempUpdatedMachine,
+    waitmanage: finalMaintenanceDate,
+  };
+
+  onSave(updatedMachine, finalMaintenanceDate);
+  onClose();
+};
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white p-6 rounded-lg shadow-md w-full max-w-sm"
+        onClick={(e) => e.stopPropagation()}
+      >
         <h2 className="text-xl font-bold mb-4">รายละเอียดเครื่อง</h2>
         <p><strong>ชื่อเครื่อง:</strong> {machine.name}</p>
 
@@ -76,7 +120,7 @@ export default function MachineModal({
             <DatePicker
               selected={selectedDate}
               onChange={handleDateChange}
-              minDate={new Date()}  // กำหนดให้เลือกได้แค่วันที่ปัจจุบันหรือในอนาคต
+              minDate={new Date()}
               dateFormat="dd-MM-yyyy"
               className="border mt-1 p-1 w-full rounded"
               popperPlacement="top"
@@ -84,15 +128,51 @@ export default function MachineModal({
           </label>
         </div>
 
+        {selectedTypeCheck === 'B' ? (
+          <div className="flex items-center gap-4 mt-5">
+            <label className="block text-sm font-medium w-full flex flex-col">
+              วันที่บำรุง:
+              <DatePicker
+                selected={maintenanceSelectedDate}
+                onChange={(date: Date | null) => {
+                  if (date) {
+                    const formatted = dayjs(date).format('DD-MM-YYYY');
+                    setMaintenanceDate(formatted);
+                  }
+                }}
+                minDate={new Date()}
+                dateFormat="dd-MM-yyyy"
+                className="border mt-1 p-1 w-full rounded"
+                popperPlacement="top"
+              />
+            </label>
+          </div>
+        ) : (
+          <div className="flex items-center gap-4 mt-5">
+            <label className="block text-sm font-medium w-full flex flex-col">
+              วันที่บำรุง:
+              <input
+                type="text"
+                className="border mt-1 p-1 w-full rounded bg-gray-100"
+                value={maintenanceDate}
+                readOnly
+              />
+            </label>
+          </div>
+        )}
+
         <div className="flex items-center gap-4 mt-5">
           <label className="block text-sm font-medium w-full flex flex-col">
-            วันที่บำรุง:
-            <input
-              type="text"
-              className="border mt-1 p-1 w-full rounded bg-gray-100"
-              value={maintenanceDate} // แสดงวันที่บำรุง
-              readOnly
-            />
+            ประเภทการเช็ค:
+            <select
+              className="border mt-1 p-1 w-full rounded"
+              value={selectedTypeCheck}
+              onChange={handleTypeCheckChange}
+            >
+              <option value="W">Week</option>
+              <option value="M">Month</option>
+              <option value="B">Between</option>
+            </select>
           </label>
         </div>
 
