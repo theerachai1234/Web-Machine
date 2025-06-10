@@ -32,9 +32,9 @@ export default function AddMachineModal({ onClose, onAdd }: Props) {
     }
   };
 
-  // ถ้า Between ให้ user แก้ไข waitmanage ได้ (ผ่าน DatePicker)
+  // แก้ไขวันที่บำรุง (waitmanage) เฉพาะกรณี typeCheck = 'B'
   const handleWaitmanageChange = (date: Date | null) => {
-    if (date) {
+    if (date && typeCheck === 'B') {
       const formatted = dayjs(date).format('DD-MM-YYYY');
       setWaitmanage(formatted);
     }
@@ -62,41 +62,41 @@ export default function AddMachineModal({ onClose, onAdd }: Props) {
     }
   }, [typeCheck]);
 
- const handleSave = async () => {
+  const handleSave = async () => {
     if (!name.trim()) {
-        alert('กรุณากรอกชื่อเครื่อง');
-        return;
+      alert('กรุณากรอกชื่อเครื่อง');
+      return;
     }
 
     const newMachine: Machine = {
-        name: name.trim(),
-        lastChecked: dayjs(lastChecked, 'DD-MM-YYYY').format('YYYY-MM-DD'),
-        waitmanage: dayjs(waitmanage, 'DD-MM-YYYY').format('YYYY-MM-DD'),
-        typeCheck,
+      name: name.trim(),
+      lastChecked: dayjs(lastChecked, 'DD-MM-YYYY').format('YYYY-MM-DD'),
+      waitmanage: dayjs(waitmanage, 'DD-MM-YYYY').format('YYYY-MM-DD'),
+      typeCheck,
     };
 
     // เพิ่มใน UI ทันที
     onAdd(newMachine);
 
     try {
-        const res = await fetch('/api/AddMachine', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newMachine),
-        });
+      const res = await fetch('/api/AddMachine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newMachine),
+      });
 
-        if (!res.ok) {
+      if (!res.ok) {
         throw new Error('ไม่สามารถบันทึกลง MongoDB ได้');
-        }
+      }
 
-        console.log('บันทึกลง MongoDB เรียบร้อย');
+      console.log('บันทึกลง MongoDB เรียบร้อย');
     } catch (error) {
-        console.error('เกิดข้อผิดพลาด:', error);
-        alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+      console.error('เกิดข้อผิดพลาด:', error);
+      alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
     }
 
     onClose();
-    };
+  };
 
   return (
     <div
@@ -146,27 +146,21 @@ export default function AddMachineModal({ onClose, onAdd }: Props) {
             />
           </label>
         </div>
-        
 
         <div className="flex items-center gap-4 mb-4 mt-5">
-            <label className="block text-sm font-medium w-full flex flex-col">
-                วันที่บำรุง (คำนวณอัตโนมัติ):
-                <DatePicker
-                    selected={selectedWaitmanageDate}
-                    onChange={(date: Date | null) => {
-                        if (typeCheck === 'B' && date) {
-                        const formatted = dayjs(date).format('DD-MM-YYYY');
-                        setWaitmanage(formatted);
-                        }
-                    }}
-                    dateFormat="dd-MM-yyyy"
-                    className={`border mt-1 p-1 w-full rounded ${
-                        typeCheck === 'B' ? 'bg-white' : 'bg-gray-100'
-                    }`}
-                    popperPlacement="top"
-                    readOnly={typeCheck !== 'B'}
-                />
-            </label>
+          <label className="block text-sm font-medium w-full flex flex-col">
+            วันที่บำรุง (คำนวณอัตโนมัติ):
+            <DatePicker
+              selected={selectedWaitmanageDate}
+              onChange={handleWaitmanageChange}
+              dateFormat="dd-MM-yyyy"
+              className={`border mt-1 p-1 w-full rounded ${
+                typeCheck === 'B' ? 'bg-white' : 'bg-gray-100'
+              }`}
+              popperPlacement="top"
+              readOnly={typeCheck !== 'B'}
+            />
+          </label>
         </div>
 
         <div className="flex justify-end gap-2">

@@ -22,7 +22,7 @@ export default function MachineModal({
 }: Props) {
   const today = dayjs().format('DD-MM-YYYY');
 
-  const [selectedTypeCheck, setSelectedTypeCheck] = useState(machine.typeCheck);
+  const [selectedTypeCheck, setSelectedTypeCheck] = useState<'B' | 'W' | 'M'>(machine.typeCheck);
   const [localDate, setLocalDate] = useState('');  // วันที่ตรวจล่าสุดที่เลือก
   const [maintenanceDate, setMaintenanceDate] = useState('');
 
@@ -37,8 +37,7 @@ export default function MachineModal({
   // อัปเดต maintenanceDate เมื่อ selectedTypeCheck, machine หรือ localDate เปลี่ยน
   useEffect(() => {
     if (selectedTypeCheck === 'B' && machine.waitmanage) {
-      // เปลี่ยน parse เป็นฟอร์แมต ISO 8601 (YYYY-MM-DD) หรือให้ dayjs แปลงแบบ auto
-      const parsedWaitManage = dayjs(machine.waitmanage); // ไม่ต้องระบุ format เพราะ ISO 8601
+      const parsedWaitManage = dayjs(machine.waitmanage); // ISO 8601 format
       if (parsedWaitManage.isValid()) {
         setMaintenanceDate(parsedWaitManage.format('DD-MM-YYYY'));
       } else {
@@ -75,32 +74,42 @@ export default function MachineModal({
   };
 
   const handleTypeCheckChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedTypeCheck(e.target.value);
+    const value = e.target.value as 'B' | 'W' | 'M';
+    setSelectedTypeCheck(value);
   };
 
-const handleSave = () => {
-  const parsed = dayjs(localDate, 'DD-MM-YYYY', true);
-  const safeDateValue = parsed.isValid() ? localDate : fallbackDate.format('DD-MM-YYYY');
-
-  const tempUpdatedMachine = {
-    ...machine,
-    lastChecked: safeDateValue,
-    typeCheck: selectedTypeCheck,
+  const handleMaintenanceDateChange = (date: Date | null) => {
+    if (date) {
+      const formatted = dayjs(date).format('DD-MM-YYYY');
+      setMaintenanceDate(formatted);
+    }
   };
 
-  const finalMaintenanceDate = machinestatus.getMaintenanceDateFromCustomDate(
-    tempUpdatedMachine,
-    safeDateValue
-  );
+  const handleSave = () => {
+    const parsed = dayjs(localDate, 'DD-MM-YYYY', true);
+    const safeDateValue = parsed.isValid() ? localDate : fallbackDate.format('DD-MM-YYYY');
 
-  const updatedMachine = {
-    ...tempUpdatedMachine,
-    waitmanage: finalMaintenanceDate,
+    const tempUpdatedMachine = {
+      ...machine,
+      lastChecked: safeDateValue,
+      typeCheck: selectedTypeCheck,
+    };
+
+    // กรณี typeCheck === 'B' ใช้ maintenanceDate ที่ user แก้เอง
+    // กรณีอื่นใช้ฟังก์ชันคำนวณ
+    const finalMaintenanceDate =
+      selectedTypeCheck === 'B' && maintenanceDate
+        ? maintenanceDate
+        : machinestatus.getMaintenanceDateFromCustomDate(tempUpdatedMachine, safeDateValue);
+
+    const updatedMachine = {
+      ...tempUpdatedMachine,
+      waitmanage: finalMaintenanceDate,
+    };
+
+    onSave(updatedMachine, finalMaintenanceDate);
+    onClose();
   };
-
-  onSave(updatedMachine, finalMaintenanceDate);
-  onClose();
-};
 
   return (
     <div
@@ -134,12 +143,7 @@ const handleSave = () => {
               วันที่บำรุง:
               <DatePicker
                 selected={maintenanceSelectedDate}
-                onChange={(date: Date | null) => {
-                  if (date) {
-                    const formatted = dayjs(date).format('DD-MM-YYYY');
-                    setMaintenanceDate(formatted);
-                  }
-                }}
+                onChange={handleMaintenanceDateChange}
                 minDate={new Date()}
                 dateFormat="dd-MM-yyyy"
                 className="border mt-1 p-1 w-full rounded"
