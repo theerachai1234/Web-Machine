@@ -32,15 +32,17 @@ export default function MachineTable({
   };
 
   const sortedMachines = [...machines].sort((a, b) => {
-    let aVal: any;
-    let bVal: any;
+    let aVal: string | number | undefined;
+    let bVal: string | number | undefined;
 
     if (sortKey === 'maintenanceDate') {
+      // สมมติ getMaintenanceDate คืนค่า string (วันที่)
       aVal = machinestatus.getMaintenanceDate(a);
       bVal = machinestatus.getMaintenanceDate(b);
     } else {
-      aVal = a[sortKey];
-      bVal = b[sortKey];
+      // type-safe access
+      aVal = a[sortKey as keyof Machine] as string | number | undefined;
+      bVal = b[sortKey as keyof Machine] as string | number | undefined;
     }
 
     if (!aVal) return 1;
@@ -52,7 +54,8 @@ export default function MachineTable({
         : bVal.localeCompare(aVal);
     }
 
-    return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+    // สมมติ aVal,bVal เป็น number
+    return sortOrder === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
   });
 
   const getSortIcon = (key: SortKey) => {
