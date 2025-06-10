@@ -19,6 +19,9 @@ export default function Page() {
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
 
+  // state สำหรับเก็บข้อความค้นหา
+  const [searchQuery, setSearchQuery] = useState('');
+
   useEffect(() => {
     const loggedIn = localStorage.getItem('loggedIn');
     if (!loggedIn) {
@@ -47,7 +50,6 @@ export default function Page() {
     setShowAddModal(false);
   };
 
-  // ฟังก์ชันลบเครื่องจักร
   const handleDeleteMachine = async (name: string) => {
     try {
       const res = await fetch('/api/DeleteMachine', {
@@ -61,7 +63,6 @@ export default function Page() {
         throw new Error(errData.error || 'ลบเครื่องจักรไม่สำเร็จ');
       }
 
-      // ลบจาก state
       setMachines((prev) => prev.filter((m) => m.name !== name));
     } catch (error) {
       alert('เกิดข้อผิดพลาดในการลบเครื่องจักร: ' + (error instanceof Error ? error.message : ''));
@@ -71,19 +72,34 @@ export default function Page() {
 
   if (!authorized) return null;
 
+  // กรองเครื่องจักรตาม searchQuery (ค้นหาชื่อเครื่องจักร)
+  const filteredMachines = machines.filter((m) =>
+    m.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div>
       <TopBar />
 
       <main className="p-4 pt-16">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-2">
           <h1 className="text-2xl font-bold">รายการเครื่องจักร</h1>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            เพิ่มเครื่องจักรใหม่
-          </button>
+
+          <div className="flex items-center gap-2 ml-auto">
+            <input
+              type="text"
+              placeholder="ค้นหาชื่อเครื่องจักร..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="border px-3 py-1 rounded w-48"
+            />
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              เพิ่มเครื่องจักรใหม่
+            </button>
+          </div>
         </div>
 
         {loading && <p>กำลังโหลดข้อมูล...</p>}
@@ -91,7 +107,7 @@ export default function Page() {
 
         {!loading && !error && (
           <>
-            {machines.length === 0 ? (
+            {filteredMachines.length === 0 ? (
               <table className="min-w-full border border-gray-300">
                 <thead>
                   <tr className="bg-gray-100">
@@ -114,11 +130,9 @@ export default function Page() {
             ) : (
               <>
                 <MachineTable
-                  machines={machines}
-                  onSelectMachine={(machine) => {
-                    setSelectedMachine(machine);
-                  }}
-                  onDeleteMachine={handleDeleteMachine} // ส่งฟังก์ชันลบเข้าไป
+                  machines={filteredMachines}
+                  onSelectMachine={(machine) => setSelectedMachine(machine)}
+                  onDeleteMachine={handleDeleteMachine}
                 />
 
                 {selectedMachine && (
