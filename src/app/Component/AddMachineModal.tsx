@@ -139,7 +139,6 @@ export default function AddMachineModal({ onClose, onAdd }: Props) {
             <DatePicker
               selected={selectedDate}
               onChange={handleDateChange}
-              minDate={typeCheck === 'B' ? undefined : new Date()}
               dateFormat="dd-MM-yyyy"
               className="border mt-1 p-1 w-full rounded"
               popperPlacement="top"
